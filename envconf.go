@@ -6,7 +6,7 @@ import (
 	"reflect"
 )
 
-func EnvStruct(dest interface{}) error {
+func Parse(dest interface{}) error {
 	rt := reflect.TypeOf(dest).Elem()
 	rv := reflect.ValueOf(dest).Elem()
 	for i := 0; i < rv.NumField(); i++ {
