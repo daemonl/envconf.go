@@ -14,9 +14,8 @@ func Parse(dest interface{}) error {
 		envName := tag.Get("env")
 		envVal := os.Getenv(envName)
 		if envVal == "" {
-			defaultValue := tag.Get("default")
-			if defaultValue == "" {
-
+			defaultValue, ok := tag.Lookup("default")
+			if !ok {
 				return fmt.Errorf("Required ENV var not set: %v", tag)
 			}
 			envVal = defaultValue
