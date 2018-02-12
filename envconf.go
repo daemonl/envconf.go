@@ -46,6 +46,9 @@ func (p Parser) Parse(dest interface{}) error {
 	for i := 0; i < rv.NumField(); i++ {
 		tag := rt.Field(i).Tag
 		envName := tag.Get("env")
+		if envName == "" {
+			continue
+		}
 		envVal := os.Getenv(envName)
 		if envVal == "" {
 			if defaultValue, ok := tag.Lookup("default"); ok {
