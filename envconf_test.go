@@ -2,6 +2,7 @@ package envconf
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
 
@@ -48,6 +49,33 @@ func TestTranslate(t *testing.T) {
 			}
 
 		}
+	}
+
+}
+
+func TestParse(t *testing.T) {
+	s := struct {
+		Simple  string `env:"T_SIMPLE"`
+		Default string `env:"T_DEFAULT" default:"default"`
+		Bytes   Base64 `env:"T_SECRET"`
+	}{}
+
+	os.Setenv("T_SIMPLE", "simple")
+	os.Setenv("T_SECRET", "dGVzdCBzdHJpbmc=")
+	if err := Parse(&s); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if s.Simple != "simple" {
+		t.Errorf("Expect 'simple' got '%s'", s.Simple)
+	}
+
+	if s.Default != "default" {
+		t.Errorf("Expect 'default' got '%s'", s.Simple)
+	}
+
+	if string(s.Bytes) != "test string" {
+		t.Errorf("Expected 'test string' in bytes, got %s", string(s.Bytes))
 	}
 
 }

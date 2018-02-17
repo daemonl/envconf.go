@@ -16,6 +16,10 @@ type Translator interface {
 	Translate(in string) (string, error)
 }
 
+type setterFromEnv interface {
+	FromEnvString(string) error
+}
+
 type Parser struct {
 	Translators map[string]Translator
 }
@@ -24,6 +28,17 @@ func New() *Parser {
 	return &Parser{
 		Translators: map[string]Translator{},
 	}
+}
+
+type Base64 []byte
+
+func (b64 *Base64) FromEnvString(in string) error {
+	b, err := base64.URLEncoding.DecodeString(in)
+	if err != nil {
+		return err
+	}
+	*b64 = b
+	return nil
 }
 
 type TranslatorFunc func(in string) (string, error)
@@ -63,7 +78,12 @@ func (p Parser) Parse(dest interface{}) error {
 			return err
 		}
 
-		rv.Field(i).SetString(envVal)
+		fieldInterface := rv.Field(i).Addr().Interface()
+		if withSetter, ok := fieldInterface.(setterFromEnv); ok {
+			withSetter.FromEnvString(envVal)
+		} else {
+			rv.Field(i).SetString(envVal)
+		}
 	}
 	return nil
 }
