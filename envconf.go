@@ -81,8 +81,27 @@ func (p Parser) Parse(dest interface{}) error {
 		fieldInterface := rv.Field(i).Addr().Interface()
 		if withSetter, ok := fieldInterface.(setterFromEnv); ok {
 			withSetter.FromEnvString(envVal)
-		} else {
-			rv.Field(i).SetString(envVal)
+			continue
+		}
+
+		vInterface := rv.Field(i).Addr().Interface()
+		switch v := vInterface.(type) {
+		case *string:
+			*v = envVal
+		case *[]string:
+			vals := strings.Split(envVal, ",")
+			result := make([]string, 0, len(vals))
+			for _, val := range vals {
+				val := strings.TrimSpace(val)
+				if val == "" {
+					continue
+				}
+				result = append(result, val)
+			}
+			*v = result
+
+		default:
+			return fmt.Errorf("In tag %v unsupported type %s", tag, rt.Field(i).Type.String())
 		}
 	}
 	return nil

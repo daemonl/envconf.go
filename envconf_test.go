@@ -45,7 +45,7 @@ func TestTranslate(t *testing.T) {
 		} else {
 			str := err.Error()
 			if str != expectErr {
-				t.Errorf("For %s, Wrong error: %s, expect %s", str, expectErr)
+				t.Errorf("For %s, Wrong error: %s, expect %s", input, str, expectErr)
 			}
 
 		}
@@ -55,9 +55,10 @@ func TestTranslate(t *testing.T) {
 
 func TestParse(t *testing.T) {
 	s := struct {
-		Simple  string `env:"T_SIMPLE"`
-		Default string `env:"T_DEFAULT" default:"default"`
-		Bytes   Base64 `env:"T_SECRET"`
+		Simple  string   `env:"T_SIMPLE"`
+		Default string   `env:"T_DEFAULT" default:"default"`
+		Bytes   Base64   `env:"T_SECRET"`
+		Array   []string `env:"T_ARR" default:"a, b, c"`
 	}{}
 
 	os.Setenv("T_SIMPLE", "simple")
@@ -76,6 +77,10 @@ func TestParse(t *testing.T) {
 
 	if string(s.Bytes) != "test string" {
 		t.Errorf("Expected 'test string' in bytes, got %s", string(s.Bytes))
+	}
+
+	if len(s.Array) != 3 || s.Array[0] != "a" || s.Array[2] != "c" {
+		t.Errorf("Expected [a,b,c], got %v", s.Array)
 	}
 
 }
