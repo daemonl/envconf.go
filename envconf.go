@@ -1,3 +1,5 @@
+// Package envconf parses enviconment variables into structs or once off calls.
+// It supports multiple types
 package envconf
 
 import (
@@ -67,6 +69,7 @@ func (p *Parser) RegisterTranslatorFunc(name string, translator func(string) (st
 // the environment. the `env` tag gives the name of the variable. If the
 // environment variable evaluates to an empty string, the value of `default` is
 // used, or an error is thrown if the `default` tag is omitted.
+// To allow optional paramters, set default to an empty string
 func (p Parser) Parse(dest interface{}) error {
 	rt := reflect.TypeOf(dest).Elem()
 	rv := reflect.ValueOf(dest).Elem()
