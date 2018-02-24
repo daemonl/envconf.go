@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/daemonl/envconf.go?branch=master)](https://travis-ci.org/daemonl/envconf.go)
+[![Build Status](https://travis-ci.org/daemonl/envconf.go.svg?branch=master)](https://travis-ci.org/daemonl/envconf.go)
 [![GoDoc](https://godoc.org/github.com/daemonl/envconf.go?status.svg)](https://godoc.org/github.com/daemonl/envconf.go)
 [![codecov](https://codecov.io/gh/daemonl/envconf.go/branch/master/graph/badge.svg)](https://codecov.io/gh/daemonl/envconf.go)
 
