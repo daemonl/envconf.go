@@ -111,7 +111,7 @@ func (p Parser) Parse(dest interface{}) error {
 			}
 			*field = out
 		default:
-			return fmt.Errorf("Values of type %T are not supported", field)
+			return fmt.Errorf("In tag %v unsupported type %s", tag, rt.Field(i).Type.String())
 		}
 	}
 	return nil

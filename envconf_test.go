@@ -45,7 +45,7 @@ func TestTranslate(t *testing.T) {
 		} else {
 			str := err.Error()
 			if str != expectErr {
-				t.Errorf("For %s, Wrong error: %s, expect %s", str, expectErr)
+				t.Errorf("For %s, Wrong error: %s, expect %s", input, str, expectErr)
 			}
 
 		}
@@ -59,11 +59,13 @@ func TestParse(t *testing.T) {
 		Default string   `env:"T_DEFAULT" default:"default"`
 		Bytes   Base64   `env:"T_SECRET"`
 		Slice   []string `env:"T_SLICE"`
+		Bool    bool     `env:"T_BOOL"`
 	}{}
 
 	os.Setenv("T_SIMPLE", "simple")
 	os.Setenv("T_SECRET", "dGVzdCBzdHJpbmc=")
 	os.Setenv("T_SLICE", "val1, val2")
+	os.Setenv("T_BOOL", "true")
 	if err := Parse(&s); err != nil {
 		t.Fatal(err.Error())
 	}
@@ -85,4 +87,7 @@ func TestParse(t *testing.T) {
 		t.Errorf("Expected the values, got %v", s.Slice)
 	}
 
+	if !s.Bool {
+		t.Errorf("Should be true")
+	}
 }
