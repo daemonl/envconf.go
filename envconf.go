@@ -2,6 +2,7 @@ package envconf
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"reflect"
@@ -38,6 +39,17 @@ func (b64 *Base64) FromEnvString(in string) error {
 		return err
 	}
 	*b64 = b
+	return nil
+}
+
+type Hex []byte
+
+func (h *Hex) FromEnvString(in string) error {
+	b, err := hex.DecodeString(in)
+	if err != nil {
+		return err
+	}
+	*h = b
 	return nil
 }
 
@@ -81,8 +93,25 @@ func (p Parser) Parse(dest interface{}) error {
 		fieldInterface := rv.Field(i).Addr().Interface()
 		if withSetter, ok := fieldInterface.(setterFromEnv); ok {
 			withSetter.FromEnvString(envVal)
-		} else {
-			rv.Field(i).SetString(envVal)
+			continue
+		}
+
+		switch field := fieldInterface.(type) {
+		case *string:
+			*field = envVal
+		case *bool:
+			bVal := strings.HasPrefix(strings.ToLower(envVal), "t")
+			*field = bVal
+
+		case *[]string:
+			vals := strings.Split(envVal, ",")
+			out := make([]string, 0, len(vals))
+			for _, val := range vals {
+				out = append(out, strings.TrimSpace(val))
+			}
+			*field = out
+		default:
+			return fmt.Errorf("Values of type %T are not supported", field)
 		}
 	}
 	return nil

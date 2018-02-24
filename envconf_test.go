@@ -55,13 +55,15 @@ func TestTranslate(t *testing.T) {
 
 func TestParse(t *testing.T) {
 	s := struct {
-		Simple  string `env:"T_SIMPLE"`
-		Default string `env:"T_DEFAULT" default:"default"`
-		Bytes   Base64 `env:"T_SECRET"`
+		Simple  string   `env:"T_SIMPLE"`
+		Default string   `env:"T_DEFAULT" default:"default"`
+		Bytes   Base64   `env:"T_SECRET"`
+		Slice   []string `env:"T_SLICE"`
 	}{}
 
 	os.Setenv("T_SIMPLE", "simple")
 	os.Setenv("T_SECRET", "dGVzdCBzdHJpbmc=")
+	os.Setenv("T_SLICE", "val1, val2")
 	if err := Parse(&s); err != nil {
 		t.Fatal(err.Error())
 	}
@@ -76,6 +78,11 @@ func TestParse(t *testing.T) {
 
 	if string(s.Bytes) != "test string" {
 		t.Errorf("Expected 'test string' in bytes, got %s", string(s.Bytes))
+	}
+	if len(s.Slice) != 2 {
+		t.Errorf("Expected 2 elements, got %v", s.Slice)
+	} else if s.Slice[0] != "val1" || s.Slice[1] != "val2" {
+		t.Errorf("Expected the values, got %v", s.Slice)
 	}
 
 }
