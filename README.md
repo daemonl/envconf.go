@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/daemonl/envconf.go.svg?branch=master)](https://travis-ci.org/daemonl/envconf.go)
-[![GoDoc](https://godoc.org/github.com/daemonl/envconf.go?status.svg)](https://godoc.org/github.com/daemonl/envconf.go)
+[![GoDoc](https://godoc.org/gopkg.daemonl.com/envconf?status.svg)](https://godoc.org/gopkg.daemonl.com/envconf)
 [![codecov](https://codecov.io/gh/daemonl/envconf.go/branch/master/graph/badge.svg)](https://codecov.io/gh/daemonl/envconf.go)
 
 
@@ -12,6 +12,9 @@ Environment Variable config loader for go
 ## Simple Usage
 
 ```
+
+import "gopkg.daemonl.com/envconf"
+
 var config struct {
 	Bind string `env:"BIND" default:":8080"`
 }
