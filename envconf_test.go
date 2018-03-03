@@ -3,6 +3,8 @@ package envconf
 import (
 	"fmt"
 	"os"
+	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -55,15 +57,20 @@ func TestTranslate(t *testing.T) {
 
 func TestParse(t *testing.T) {
 	s := struct {
-		Simple  string   `env:"T_SIMPLE"`
-		Default string   `env:"T_DEFAULT" default:"default"`
-		Bytes   Base64   `env:"T_SECRET"`
-		Slice   []string `env:"T_SLICE"`
-		Bool    bool     `env:"T_BOOL"`
+		Simple         string   `env:"T_SIMPLE"`
+		Default        string   `env:"T_DEFAULT" default:"default"`
+		Bytes64        Base64   `env:"T_BYTES64"`
+		BytesHex       Hex      `env:"T_BYTESHEX" default:"48656C6C6F20576F726C64"`
+		Slice          []string `env:"T_SLICE"`
+		Bool           bool     `env:"T_BOOL"`
+		Translate      string   `env:"T_TRANSLATE"`
+		IgnoreExported string
+		ignorePrivate  string
 	}{}
 
 	os.Setenv("T_SIMPLE", "simple")
-	os.Setenv("T_SECRET", "dGVzdCBzdHJpbmc=")
+	os.Setenv("T_BYTES64", "dGVzdCBzdHJpbmc=")
+	os.Setenv("T_TRANSLATE", "!base64:dGVzdCBzdHJpbmc=")
 	os.Setenv("T_SLICE", "val1, val2")
 	os.Setenv("T_BOOL", "true")
 	if err := Parse(&s); err != nil {
@@ -78,16 +85,112 @@ func TestParse(t *testing.T) {
 		t.Errorf("Expect 'default' got '%s'", s.Simple)
 	}
 
-	if string(s.Bytes) != "test string" {
-		t.Errorf("Expected 'test string' in bytes, got %s", string(s.Bytes))
+	if strVal := string(s.Bytes64); strVal != "test string" {
+		t.Errorf("Expected 'test string' in bytes, got %s", strVal)
 	}
+
+	if strVal := string(s.Translate); strVal != "test string" {
+		t.Errorf("Expected 'test string' in bytes, got %s", strVal)
+	}
+
 	if len(s.Slice) != 2 {
 		t.Errorf("Expected 2 elements, got %v", s.Slice)
 	} else if s.Slice[0] != "val1" || s.Slice[1] != "val2" {
 		t.Errorf("Expected the values, got %v", s.Slice)
 	}
 
+	if strVal := string(s.BytesHex); strVal != "Hello World" {
+		t.Errorf("Bad Hex Decoding: %s", strVal)
+	}
+
 	if !s.Bool {
 		t.Errorf("Should be true")
+	}
+}
+
+func TestSadNotSet(t *testing.T) {
+	s := struct {
+		Simple string `env:"T_NOT_SET"`
+	}{}
+
+	if err := Parse(&s); err == nil {
+		t.Errorf("Expected Error")
+	} else {
+		msg := err.Error()
+		if !strings.Contains(msg, "not set") ||
+			!strings.Contains(msg, "T_NOT_SET") {
+			t.Errorf("Didn't match rules: %s", msg)
+		}
+	}
+}
+
+func TestSadUnsupportedType(t *testing.T) {
+	s := struct {
+		Simple testing.T `env:"T_NOT_SET" default:"value"`
+	}{}
+
+	if err := Parse(&s); err == nil {
+		t.Errorf("Expected Error")
+	} else {
+		msg := err.Error()
+		if !strings.Contains(msg, "unsupported type") ||
+			!strings.Contains(msg, "T_NOT_SET") {
+			t.Errorf("Didn't match rules: %s", msg)
+		}
+	}
+}
+
+func TestSadBadEncoding(t *testing.T) {
+	s := struct {
+		Simple testing.T `env:"T_NOT_SET" default:"!base64:In==Valid"`
+	}{}
+
+	if err := Parse(&s); err == nil {
+		t.Errorf("Expected Error")
+	} else {
+		msg := err.Error()
+		if !strings.Contains(msg, "base64") ||
+			!strings.Contains(msg, "T_NOT_SET") {
+			t.Errorf("Didn't match rules: %s", msg)
+		}
+	}
+}
+
+func TestTypes(t *testing.T) {
+
+	for in, expect := range map[string]interface{}{
+		"1": int64(1),
+		"2": int32(2),
+		"3": int16(3),
+		"4": int8(4),
+		"5": int(5),
+
+		"String": string("String"),
+
+		"True":  true,
+		"False": false,
+
+		"1.1": float64(1.1),
+		"1.2": float32(1.2),
+
+		"10": float64(10),
+		"11": float32(11),
+	} {
+
+		gotVal := reflect.New(reflect.TypeOf(expect))
+		got := gotVal.Interface()
+
+		err := SetFromString(got, in)
+		if err != nil {
+			t.Errorf("%s: %s", in, err.Error())
+			continue
+		}
+
+		gotRaw := gotVal.Elem().Interface()
+		if !reflect.DeepEqual(expect, gotRaw) {
+			t.Errorf("Was Not Equal %s. \n%#v \n%#v", in, expect, gotRaw)
+			continue
+		}
+
 	}
 }
