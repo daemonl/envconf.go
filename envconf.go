@@ -1,4 +1,4 @@
-// package envconf parses enviconment variables into structs.
+// Package envconf parses enviconment variables into structs.
 // It supports multiple types, however the core type is always a string.
 //
 // Translators are available which manipulate the string value before setting,
@@ -14,7 +14,6 @@
 // Combining translators and custom types is perfectly fine. The string
 // translations will happen first, then the outout will be passed into
 // FromEnvString
-
 package envconf
 
 import (
@@ -35,13 +34,15 @@ type Translator interface {
 	Translate(in string) (string, error)
 }
 
-type setterFromEnv interface {
+// SetterFromEnv is used by SetFromString for custom types
+type SetterFromEnv interface {
 	FromEnvString(string) error
 }
 
 // Base64 is a byte array which is loaded from a URL base64 string
 type Base64 []byte
 
+// FromEnvString Satisfies SetterFromEnv
 func (b64 *Base64) FromEnvString(in string) error {
 	b, err := base64.URLEncoding.DecodeString(in)
 	if err != nil {
@@ -54,6 +55,7 @@ func (b64 *Base64) FromEnvString(in string) error {
 // Hex is a byte array which is loaded from a Hex string
 type Hex []byte
 
+// FromEnvString Satisfies SetterFromEnv
 func (h *Hex) FromEnvString(in string) error {
 	b, err := hex.DecodeString(in)
 	if err != nil {
@@ -128,9 +130,12 @@ func (p Parser) Parse(dest interface{}) error {
 	return nil
 }
 
+// SetFromString attempts to translate a string to the given interface. Must be a pointer.
+// Standard Types string, bool, int, int(8-64) float(32, 64) and []string.
+// Custom types must have method FromEnvString(string) error
 func SetFromString(fieldInterface interface{}, stringVal string) error {
 
-	if withSetter, ok := fieldInterface.(setterFromEnv); ok {
+	if withSetter, ok := fieldInterface.(SetterFromEnv); ok {
 		return withSetter.FromEnvString(stringVal)
 	}
 
@@ -206,22 +211,24 @@ func (p Parser) Translate(val string) (string, error) {
 			return out, err
 		}
 		return p.Translate(out)
-	} else {
-		return "", fmt.Errorf("no translator named %s", name)
 	}
+	return "", fmt.Errorf("no translator named %s", name)
 
 }
 
+// DefaultParser is used by the Parse and Translate funcs for convenience
 var DefaultParser = Parser{
 	Translators: map[string]Translator{
 		"base64": TranslatorFunc(Base64Translator),
 	},
 }
 
+// Parse uses DefaultParser.Parse
 func Parse(dest interface{}) error {
 	return DefaultParser.Parse(dest)
 }
 
+// Translate uses the DefaultParser.Translate
 func Translate(in string) (string, error) {
 	return DefaultParser.Translate(in)
 }
