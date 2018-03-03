@@ -9,6 +9,10 @@ Env Conf
 
 Environment Variable config loader for go
 
+The import path "gopkg.daemonl.com/envconf" is equivalent to
+"github.com/daemonl/envconf.go", but some tools aren't keen on the
+`.go` suffix. (And what if I wanted to write this for another language?)
+
 ## Simple Usage
 
 ```
