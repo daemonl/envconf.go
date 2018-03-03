@@ -1,4 +1,4 @@
-// Package envconf parses enviconment variables into structs.
+// package envconf parses enviconment variables into structs.
 // It supports multiple types, however the core type is always a string.
 //
 // Translators are available which manipulate the string value before setting,
