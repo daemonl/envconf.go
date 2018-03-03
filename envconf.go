@@ -1,18 +1,18 @@
-// Package envconf parses enviconment variables into structs.
+// Package envconf parses environment variables into structs.
 // It supports multiple types, however the core type is always a string.
 //
 // Translators are available which manipulate the string value before setting,
 // e.g. `!base64:SGVsbG8gV29ybGQ=` will cast to a string as "Hello World".
 //
-// There is no specific handling for bytes when using this metho, it is handled
+// There is no specific handling for bytes when using this method, it is handled
 // as a string entirely, if you are expecting actual bytes use a type like Hex
 // or Base64 which will directly translate the env var string to bytes
 //
 // Standard conversion from string to int, bool etc work, as well as custom
-// types which satisfy `FromEnvString(string) error` (on a pointer, like JSON)
+// types which satisfy `SetterFromEnv` (on a pointer, like JSON)
 //
 // Combining translators and custom types is perfectly fine. The string
-// translations will happen first, then the outout will be passed into
+// translations will happen first, then the output will be passed into
 // FromEnvString
 package envconf
 
@@ -92,10 +92,10 @@ func (p *Parser) RegisterTranslatorFunc(name string, translator func(string) (st
 }
 
 // Parse reads the tags of dest to set any fields which should be parsed from
-// the environment. the `env` tag gives the name of the variable. If the
+// the environment. The `env` tag gives the name of the variable. If the
 // environment variable evaluates to an empty string, the value of `default` is
 // used, or an error is thrown if the `default` tag is omitted.
-// To allow optional paramters, set default to an empty string
+// To allow optional parameters, set default to an empty string
 func (p Parser) Parse(dest interface{}) error {
 
 	rt := reflect.TypeOf(dest).Elem()
@@ -177,6 +177,7 @@ func SetFromString(fieldInterface interface{}, stringVal string) error {
 		*field = float32(field64)
 		return err
 
+	// TODO: Support an array of anything. Using reflect?
 	case *[]string:
 		vals := strings.Split(stringVal, ",")
 		out := make([]string, 0, len(vals))
