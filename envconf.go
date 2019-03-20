@@ -182,7 +182,11 @@ func SetFromString(fieldInterface interface{}, stringVal string) error {
 		vals := strings.Split(stringVal, ",")
 		out := make([]string, 0, len(vals))
 		for _, val := range vals {
-			out = append(out, strings.TrimSpace(val))
+			stripped := strings.TrimSpace(val)
+			if stripped == "" {
+				continue
+			}
+			out = append(out, stripped)
 		}
 		*field = out
 		return nil
