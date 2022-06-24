@@ -169,6 +169,26 @@ func SetFromString(fieldInterface interface{}, stringVal string) error {
 		*field = int8(field64)
 		return err
 
+	case *uint:
+		field64, err := strconv.ParseUint(stringVal, 10, 64)
+		*field = uint(field64)
+		return err
+	case *uint64:
+		*field, err = strconv.ParseUint(stringVal, 10, 64)
+		return err
+	case *uint32:
+		field64, err := strconv.ParseUint(stringVal, 10, 32)
+		*field = uint32(field64)
+		return err
+	case *uint16:
+		field64, err := strconv.ParseUint(stringVal, 10, 16)
+		*field = uint16(field64)
+		return err
+	case *uint8:
+		field64, err := strconv.ParseUint(stringVal, 10, 8)
+		*field = uint8(field64)
+		return err
+
 	case *float64:
 		*field, err = strconv.ParseFloat(stringVal, 64)
 		return err
