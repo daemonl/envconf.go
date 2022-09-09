@@ -19,6 +19,7 @@ package envconf
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
@@ -110,6 +111,8 @@ func (p Parser) Parse(dest interface{}) error {
 		if envVal == "" {
 			if defaultValue, ok := tag.Lookup("default"); ok {
 				envVal = defaultValue
+			} else if req, ok := tag.Lookup("required"); ok && req == "false" {
+				continue
 			} else {
 				return fmt.Errorf("Required ENV var not set: %v", tag)
 			}
@@ -120,7 +123,29 @@ func (p Parser) Parse(dest interface{}) error {
 			return fmt.Errorf("In field %s: %s", envName, err)
 		}
 
-		fieldInterface := rv.Field(i).Addr().Interface()
+		fieldVal := rv.Field(i)
+
+		fieldInterface := fieldVal.Addr().Interface()
+
+		actualType := fieldVal.Kind()
+		if actualType == reflect.Pointer {
+			elemType := fieldVal.Type().Elem()
+			newVal := reflect.New(elemType)
+			fieldVal.Set(newVal)
+			fieldVal = newVal
+			actualType = fieldVal.Elem().Kind()
+		}
+
+		if actualType == reflect.Struct {
+			if !strings.HasPrefix(envVal, "{") {
+				return fmt.Errorf("In field %s: struct fields should be set using JSON strings", envName)
+			}
+
+			if err := json.Unmarshal([]byte(envVal), fieldInterface); err != nil {
+				return err
+			}
+			continue
+		}
 
 		if err := SetFromString(fieldInterface, envVal); err != nil {
 			return fmt.Errorf("In field %s: %s", envName, err)

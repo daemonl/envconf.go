@@ -55,17 +55,26 @@ func TestTranslate(t *testing.T) {
 
 }
 
+type TestJSONStruct struct {
+	Foo string `json:"foo"`
+	Bar uint64 `json:"bar"`
+}
+
 func TestParse(t *testing.T) {
+
 	s := struct {
-		Simple         string   `env:"T_SIMPLE"`
-		Default        string   `env:"T_DEFAULT" default:"default"`
-		Bytes64        Base64   `env:"T_BYTES64"`
-		BytesHex       Hex      `env:"T_BYTESHEX" default:"48656C6C6F20576F726C64"`
-		Slice          []string `env:"T_SLICE"`
-		Bool           bool     `env:"T_BOOL"`
-		Translate      string   `env:"T_TRANSLATE"`
-		IgnoreExported string
-		ignorePrivate  string
+		Simple                   string   `env:"T_SIMPLE"`
+		Default                  string   `env:"T_DEFAULT" default:"default"`
+		Bytes64                  Base64   `env:"T_BYTES64"`
+		BytesHex                 Hex      `env:"T_BYTESHEX" default:"48656C6C6F20576F726C64"`
+		Slice                    []string `env:"T_SLICE"`
+		Bool                     bool     `env:"T_BOOL"`
+		Translate                string   `env:"T_TRANSLATE"`
+		IgnoreExported           string
+		ignorePrivate            string
+		JSONStruct               TestJSONStruct  `env:"T_JSON_0"`
+		OptionalJSONStructSet    *TestJSONStruct `env:"T_JSON_1" required:"false"`
+		OptionalJSONStructNotSet *TestJSONStruct `env:"T_JSON_2" required:"false"`
 	}{}
 
 	os.Setenv("T_SIMPLE", "simple")
@@ -73,6 +82,8 @@ func TestParse(t *testing.T) {
 	os.Setenv("T_TRANSLATE", "!base64:dGVzdCBzdHJpbmc=")
 	os.Setenv("T_SLICE", "val1, val2")
 	os.Setenv("T_BOOL", "true")
+	os.Setenv("T_JSON_0", `{"foo":"fooval","bar":100}`)
+	os.Setenv("T_JSON_1", `{"foo":"fooval","bar":100}`)
 	if err := Parse(&s); err != nil {
 		t.Fatal(err.Error())
 	}
@@ -106,6 +117,19 @@ func TestParse(t *testing.T) {
 	if !s.Bool {
 		t.Errorf("Should be true")
 	}
+
+	if s.JSONStruct.Foo != "fooval" || s.JSONStruct.Bar != 100 {
+		t.Errorf("T_JSON_0 broke: %v", s.JSONStruct)
+	}
+
+	if s.OptionalJSONStructNotSet != nil {
+		t.Errorf("T_JSON_2 should be nil")
+	}
+	if s.OptionalJSONStructSet == nil {
+		t.Errorf("T_JSON_1 should not be nil")
+	} else if s.OptionalJSONStructSet.Foo != "fooval" || s.OptionalJSONStructSet.Bar != 100 {
+		t.Errorf("T_JSON_0 broke: %v", s.OptionalJSONStructSet)
+	}
 }
 
 func TestSadNotSet(t *testing.T) {
@@ -126,7 +150,7 @@ func TestSadNotSet(t *testing.T) {
 
 func TestSadUnsupportedType(t *testing.T) {
 	s := struct {
-		Simple testing.T `env:"T_NOT_SET" default:"value"`
+		Simple []byte `env:"T_NOT_SET" default:"value"`
 	}{}
 
 	if err := Parse(&s); err == nil {
