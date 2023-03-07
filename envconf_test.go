@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestTranslate(t *testing.T) {
@@ -199,6 +200,8 @@ func TestTypes(t *testing.T) {
 
 		"10": float64(10),
 		"11": float32(11),
+
+		"1h": time.Duration(time.Hour),
 	} {
 
 		gotVal := reflect.New(reflect.TypeOf(expect))
