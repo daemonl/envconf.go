@@ -26,6 +26,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Translator is responsible for taking a string and converting it to the
@@ -221,6 +222,14 @@ func SetFromString(fieldInterface interface{}, stringVal string) error {
 		field64, err := strconv.ParseFloat(stringVal, 32)
 		*field = float32(field64)
 		return err
+
+	case *time.Duration:
+		val, err := time.ParseDuration(stringVal)
+		if err != nil {
+			return err
+		}
+		*field = val
+		return nil
 
 	// TODO: Support an array of anything. Using reflect?
 	case *[]string:
